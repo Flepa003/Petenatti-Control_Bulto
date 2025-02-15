@@ -1,10 +1,18 @@
-import sqlite3
+# import sqlite3
+from hdbcli import dbapi
 
 class Data:
     
     def __init__(self):
         # Conectar a la base de datos (o crearla si no existe)
-        self.conn = sqlite3.connect('D:/Desarrollos Python/Petinatti-Control-Bulto/controlbulto/src/controlbulto/db.sqlite3')
+        # self.conn = sqlite3.connect('D:/Desarrollos Python/Petinatti-Control-Bulto/controlbulto/src/controlbulto/db.sqlite3')
+        #Initialize your connection
+        self.conn = dbapi.connect(
+    		address='10.0.3.17',
+    		port='30015',
+    		user='SYSTEM',
+    		password='S4p*2022'
+		)
         # Crear un cursor para interactuar con la base de datos
         self.cursor = self.conn.cursor()
 	
@@ -16,7 +24,7 @@ class Data:
 
     def select(self):
         # Consultar datos
-        self.cursor.execute('SELECT * FROM Bultos')
+        self.cursor.execute('SELECT * FROM PMX_SSCC_SHIPPING_LABEL')
         filas = self.cursor.fetchall()
         # for fila in filas:
         #    print(fila)       
@@ -26,12 +34,12 @@ class Data:
     
     def select_SSCC(self, sscc):
         # Consultar datos
-        self.cursor.execute("SELECT ItemCode, ItemDescription, Quantity FROM Bultos Where SSCC = '" + str(sscc) + "'")
+        self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity" FROM "CEDISUR_PROD"."PMX_SSCC_SHIPPING_LABEL" Where "SSCC" = ' +"'" + str(sscc) + "'")
         filas = self.cursor.fetchall()
         # for fila in filas:
         #    print(fila)       
         # Cerrar la conexión
-        self.conn.close()
+        # self.conn.close()
         return filas
 
 
