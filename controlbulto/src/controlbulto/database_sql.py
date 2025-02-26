@@ -1,4 +1,5 @@
 # import sqlite3
+import pyodbc
 from hdbcli import dbapi
 
 class Data:
@@ -7,12 +8,7 @@ class Data:
         # Conectar a la base de datos (o crearla si no existe)
         # self.conn = sqlite3.connect('D:/Desarrollos Python/Petinatti-Control-Bulto/controlbulto/src/controlbulto/db.sqlite3')
         #Initialize your connection
-        self.conn = dbapi.connect(
-    		address='10.0.3.17',
-    		port='30015',
-    		user='SYSTEM',
-    		password='S4p*2022'
-		)
+        self.conn = pyodbc.connect('DRIVER={SQL Server};SERVER=FLEPADEV;DATABASE=Petenatti;UID=sa;PWD=pf2095')
         # Crear un cursor para interactuar con la base de datos
         self.cursor = self.conn.cursor()
 	
@@ -24,7 +20,7 @@ class Data:
 
     def select(self):
         # Consultar datos
-        self.cursor.execute('SELECT * FROM PMX_SSCC_SHIPPING_LABEL')
+        self.cursor.execute('SELECT * FROM Bultos Where "BARCODE" is not null')
         filas = self.cursor.fetchall()
         # for fila in filas:
         #    print(fila)       
@@ -34,7 +30,7 @@ class Data:
     
     def select_SSCC(self, sscc):
         # Consultar datos
-        self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity" FROM "CEDISUR_PROD"."PMX_SSCC_SHIPPING_LABEL" Where "SSCC" = ' +"'" + str(sscc) + "'")
+        self.cursor.execute('SELECT ItemCode, ItemName, Quantity FROM Bultos Where SSCC = ' +"'" + str(sscc) + "'")
         filas = self.cursor.fetchall()
         # for fila in filas:
         #    print(fila)       
@@ -42,6 +38,16 @@ class Data:
         # self.conn.close()
         return filas
 
+
+    def select_Bulto(self, ref):
+        # Consultar datos
+        self.cursor.execute("SELECT * FROM Bultos Where SSCC = '{}' AND Barcode = '{}'".format(ref[0], ref[1]))
+        filas = self.cursor.fetchall()
+        # for fila in filas:
+        #    print(fila)       s
+        # Cerrar la conexión
+        # self.conn.close()
+        return filas
 
 
 
