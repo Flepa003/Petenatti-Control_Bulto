@@ -1,17 +1,66 @@
 """
 Realiza el control del bulto - PMX
 """
-
 import toga
 from toga.style import Pack
 from toga.style.pack import BOLD, COLUMN, CENTER, CENTER
 from toga.constants import *
 #
 from controlbulto.database_hana import *
+from controlbulto.loginSAP import *
 
 
 class ControlBulto(toga.App):
     def startup(self):
+        # Crear la ventana principal
+        self.main_window = toga.MainWindow(title=self.formal_name, size=(300, 300))
+        #
+        # Cargar la imagen
+        image_path = 'resources/icono.png'
+        image = toga.Image(image_path)
+
+        # Crear un widget de imagen
+        self.image_view = toga.ImageView(image, style=Pack(width=300, height=100))
+        
+        # Crear los widgets
+        self.username_input = toga.TextInput(placeholder='Usuario')
+        self.password_input = toga.PasswordInput(placeholder='Contraseña')
+        self.login_button = toga.Button('Iniciar Sesión', on_press=self.login, style=Pack(flex=1,background_color='#4F8DD9', height=40))
+
+        # Crear el contenedor principal
+        self.box_login = toga.Box(style=Pack(direction=COLUMN, padding=(0,10)))
+
+        # Añadir los widgets al contenedor
+        self.box_login.add(self.image_view)
+        self.box_login.add(self.username_input)
+        self.box_login.add(self.password_input)
+        self.box_login.add(self.login_button)
+        # Añadir el contenedor a la ventana principal
+        self.main_window.content = self.box_login
+        self.main_window.show()
+        
+
+    def login(self, widget):
+        username = self.username_input.value
+        password = self.password_input.value
+        
+        session_id = login_to_sap_b1("SBOPHNOTST",username, password)
+        #if username == 'admin' and password == '123':
+        if (session_id):
+            self.main_window.info_dialog('Login Exitoso', '¡Bienvenido!')
+            # Obtengo usuario para grbar control
+            self.user_name = username
+            # self.main_window.content.remove(self.box_login)
+            # self.main_window.close()
+            self.proceso()
+            
+        else:
+            self.main_window.error_dialog('Error de Login', 'Usuario o contraseña incorrectos.')
+            self.password_input.focus()
+            
+    def proceso(self):
+        # Limpio la pantalla de Login
+        self.main_window.content.remove(self.box_login)
         # Vble. de control
         self.p_ini = 0
         # Defino el acceso a la DB
@@ -29,16 +78,17 @@ class ControlBulto(toga.App):
         self.main_box = toga.Box(style=Pack(direction=COLUMN, alignment=CENTER))
 
         self.name_label = toga.Label("SSCC",style=Pack(padding=(15,160), font_weight=BOLD, background_color=ORANGE, height=20, alignment=CENTER ))
-        
+                
         self.name_input = toga.TextInput(on_confirm=self.scan_SSCC,style=Pack(flex=1))
 
         self.name_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color=ORANGE))
+        # self.name_box.add(self.image_view)
         self.name_box.add(self.name_label)
         self.name_box.add(self.name_input)
 
         self.main_box.add(self.name_box)
 
-        self.main_window = toga.MainWindow(title=self.formal_name, size=(300, 300))
+        # self.main_window = toga.MainWindow(title=self.formal_name, size=(300, 300))
         self.main_window.content = self.main_box
         self.name_input.focus()
         self.main_window.show()
@@ -55,11 +105,14 @@ class ControlBulto(toga.App):
         )
         # Guardo el SSCC para uso posterior
         self.mySSCC = widget.value
+        # Controlo el largo del SSCC a 18
+        if (len(self.mySSCC) > 18):
+            self.mySSCC = self.mySSCC[-18:]
         # Busco los datos en la DB
         self.filas = self.db.select_SSCC(self.mySSCC)
         # Valido la existencia del SSCC
         if(len(self.filas) == 0):
-            self.main_window.error_dialog('ERROR...','SSCC NO ENCONTRADO...')
+            self.main_window.error_dialog('ERROR...','SSCC NO ENCONTRADO...\nSSCC YA CONTROLADO...')
             self.name_input.value = ''
             return
         # Guardo la cantidad de filas para la iteracion
@@ -145,13 +198,14 @@ class ControlBulto(toga.App):
     def button_cerrar(self,widget):
         # Impacto la Marca en la tabla LUID con los bultos OK
         for ok_bultos in self.sscc_controlados:
-            self.db.cierraPREPARADOS(ok_bultos)
+            self.db.cierraPREPARADOS(ok_bultos,self.user_name)
         # print('OK! CERRAR-- REVISAR --')
         # Retomo al scan del SSCC
         self.sscc_controlados.clear()
         self.bultos_controlados.clear()
         self.name_input.value = ''
         self.main_window.content.remove(self.resul_box_box)
+        self.name_input.focus()
 
         
     
@@ -163,6 +217,7 @@ class ControlBulto(toga.App):
         # Retomo al scan del SSCC
         self.name_input.value = ''
         self.main_window.content.remove(self.resul_box_box)
+        self.name_input.focus()
         
     def salir(self):
         self.main_window.error_dialog('ERROR...','No s epudo conectar a la Base de Datos...')

@@ -1,4 +1,5 @@
 # import sqlite3
+import datetime
 from hdbcli import dbapi
 
 class Data:
@@ -39,7 +40,7 @@ class Data:
     
     def select_SSCC(self, sscc):
         # Consultar datos
-        self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity" FROM "SBOPHNOTST"."PMX_SSCC_SHIPPING_LABEL" Where "ARG_PROCESS" = ' + "'N'" + ' AND "SSCC" = ' +"'" + str(sscc) + "'")
+        self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity" FROM "SBOPHNOTST"."PMX_SSCC_SHIPPING_READY_ARG" Where "ARG_PROCESS" = ' + "'N'" + ' AND "SSCC" = ' +"'" + str(sscc) + "'")
         filas = self.cursor.fetchall()
         # for fila in filas:
         #    print(fila)       
@@ -50,14 +51,14 @@ class Data:
 
     def select_Bulto(self, ref):
         # Consultar datos
-        self.cursor.execute("SELECT * FROM SBOPHNOTST.PMX_SSCC_SHIPPING_LABEL Where SSCC = '{}' AND Barcode = '{}'".format(ref[0], ref[1]))
+        self.cursor.execute("SELECT * FROM SBOPHNOTST.PMX_SSCC_SHIPPING_READY_ARG Where SSCC = '{}' AND Barcode = '{}'".format(ref[0], ref[1]))
         filas = self.cursor.fetchall()
         return filas
 
 
-    def cierraPREPARADOS(self, element):
+    def cierraPREPARADOS(self, element, usuario):
 		# Actualizo Bulto
-        sql = 'Update "SBOPHNOTST"."PMX_LUID" Set "ARG_PROCESS" = ' + "'Y'" + '  Where "SSCC" = ' + "'" + str(element) + "'"   
+        sql = 'Update "SBOPHNOTST"."PMX_LUID" Set "ARG_PROCESS" = ' + "'Y'" + ', "ARG_FECHACONTROL" = ' + "'" + str(datetime.datetime.now())[0:19]+ "'" + ', "ARG_USER" = ' + "'" + str(usuario) + "'" + ' Where "SSCC" = ' + "'" + str(element) + "'"   
         # print(sql)
 		# execute the query
         self.cursor.execute(sql)
