@@ -48,6 +48,16 @@ class Data:
         # self.conn.close()
         return filas
 
+    def select_MUELLE(self):
+        # Consultar datos
+        self.cursor.execute('Select Distinct "DestStorLocCode" From "SBOPHNOTST"."PMX_SSCC_SHIPPING_READY_ARG"  Order By "DestStorLocCode" ')
+        filas = self.cursor.fetchall()
+        # for fila in filas:
+        #    print(fila)       
+        # Cerrar la conexión
+        # self.conn.close()
+        return filas
+
 
     def select_Bulto(self, ref):
         # Consultar datos

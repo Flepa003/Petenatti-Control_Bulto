@@ -1,6 +1,7 @@
 """
 Realiza el control del bulto - PMX
 """
+import asyncio
 import toga
 from toga.style import Pack
 from toga.style.pack import BOLD, COLUMN, CENTER, CENTER
@@ -47,45 +48,68 @@ class ControlBulto(toga.App):
         session_id = login_to_sap_b1("SBOPHNOTST",username, password)
         #if username == 'admin' and password == '123':
         if (session_id):
-            self.main_window.info_dialog('Login Exitoso', '¡Bienvenido!')
+            # self.main_window.info_dialog('Login Exitoso', '¡Bienvenido!')
             # Obtengo usuario para grbar control
             self.user_name = username
             # self.main_window.content.remove(self.box_login)
             # self.main_window.close()
-            self.proceso()
+            self.seleccionaMuelle()
             
         else:
             self.main_window.error_dialog('Error de Login', 'Usuario o contraseña incorrectos.')
             self.password_input.focus()
-            
-    def proceso(self):
+    
+    def seleccionaMuelle(self):
         # Limpio la pantalla de Login
         self.main_window.content.remove(self.box_login)
+        # Crear los widgets
+        self.muelle_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color='#56a050', width=300, height=40))
+        self.muelle_label = toga.Label("MUELLE",style=Pack(padding=(15,130), font_weight=BOLD, background_color='#56a050', height=20, alignment=CENTER ))                       
+        # Conecto a Hana
+        self.db = Data()
+        #
+        self.muelle_filas = self.db.select_MUELLE()
+        #
+        self.muelle_selection = toga.Selection(
+            items=self.muelle_filas, on_change=self.proceso,
+            style=Pack(padding=(0, 5))
+        )
+        #
+        # Añadir los widgets al contenedor
+        self.muelle_box.add(self.muelle_label)
+        self.muelle_box.add(self.muelle_selection)
+        # Añadir el contenedor a la ventana principal
+        self.main_window.content = self.muelle_box
+        self.main_window.show()
+
+            
+    def proceso(self, widget):
+        # Guardo el muelle
+        self.muelle = widget.value
+        # Limpio la pantalla de Login
+        self.main_window.content.remove(self.muelle_box)
+        # Creo seleccion de MUELLE
         # Vble. de control
         self.p_ini = 0
-        # Defino el acceso a la DB
-        try:
-            self.db = Data()
-        except Exception as e:
-            # Captura cualquier excepción y la imprime
-            print(f"Ha ocurrido un error: {e}")
-            self.salir()
         # Creo la lista para guardar los Bultos controlados OK
         self.sscc_controlados = []
         self.bultos_controlados = []
         # Creo las pantalla/ventanas
-        # self.main_box = toga.Box(style=Pack(direction=COLUMN, width=100, height=100, alignment=CENTER))
+        self.muelle_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color='#56a050'))
         self.main_box = toga.Box(style=Pack(direction=COLUMN, alignment=CENTER))
 
+        self.name_label_muelle = toga.Label(self.muelle,style=Pack(padding=(15,160), font_weight=BOLD, background_color='#56a050', height=15, alignment=CENTER ))
         self.name_label = toga.Label("SSCC",style=Pack(padding=(15,160), font_weight=BOLD, background_color=ORANGE, height=20, alignment=CENTER ))
                 
         self.name_input = toga.TextInput(on_confirm=self.scan_SSCC,style=Pack(flex=1))
 
         self.name_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color=ORANGE))
         # self.name_box.add(self.image_view)
+        self.muelle_box.add(self.name_label_muelle)
         self.name_box.add(self.name_label)
         self.name_box.add(self.name_input)
 
+        self.main_box.add(self.muelle_box)
         self.main_box.add(self.name_box)
 
         # self.main_window = toga.MainWindow(title=self.formal_name, size=(300, 300))
@@ -93,7 +117,7 @@ class ControlBulto(toga.App):
         self.name_input.focus()
         self.main_window.show()
 
-    def scan_SSCC(self, widget):
+    async def scan_SSCC(self, widget):
         if(self.p_ini == 1):
             self.main_window.content.remove(self.resul_box_box)
         self.resul_box_box = toga.Box()
@@ -112,7 +136,11 @@ class ControlBulto(toga.App):
         self.filas = self.db.select_SSCC(self.mySSCC)
         # Valido la existencia del SSCC
         if(len(self.filas) == 0):
-            self.main_window.error_dialog('ERROR...','SSCC NO ENCONTRADO...\nSSCC YA CONTROLADO...')
+            # self.main_window.error_dialog('ERROR...','SSCC NO ENCONTRADO...\nSSCC YA CONTROLADO...')
+            ask_a_question = toga.InfoDialog("ERROR!", "SSCC NO ENCONTRADO...\nSSCC YA CONTROLADO...")
+            if await self.main_window.dialog(ask_a_question):
+                print("The user said yes!")
+            
             self.name_input.value = ''
             return
         # Guardo la cantidad de filas para la iteracion
@@ -154,7 +182,7 @@ class ControlBulto(toga.App):
         self.main_window.show()
         
 
-    def validacion(self, widget):
+    async def validacion(self, widget):
         # Crear un mensaje
         global mensaje
         mensaje = toga.Label('', style=Pack(padding=(10), color='red'))
@@ -175,7 +203,9 @@ class ControlBulto(toga.App):
         else:
             # mensaje
             # mensaje = toga.Label('ERROR: id NO ENCONTRADO!', style=Pack(padding=(10,10), color='red'))
-            self.main_window.error_dialog('ERROR...','Barcode NO ENCONTRADO...')
+            ask_a_question = toga.InfoDialog('ERROR...','Barcode NO ENCONTRADO...')
+            if await self.main_window.dialog(ask_a_question):
+                print("The user said yes!")
         # Añadir el mensaje a la caja principal
         # self.bultoId_box.add(mensaje)
         widget.value = ''
