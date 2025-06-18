@@ -30,7 +30,9 @@ class Data:
 
     def select(self):
         # Consultar datos
-        self.cursor.execute('SELECT * FROM SBOPHNOTST.PMX_SSCC_SHIPPING_LABEL Where "BARCODE" is not null')
+        # self.cursor.execute('SELECT * FROM SBOPHNOTST.PMX_SSCC_SHIPPING_LABEL Where "BARCODE" is not null')
+        # PRODUCCION
+        self.cursor.execute('SELECT * FROM PETHNOPROD.PMX_SSCC_SHIPPING_LABEL Where "BARCODE" is not null')
         filas = self.cursor.fetchall()
         # for fila in filas:
         #    print(fila)       
@@ -40,7 +42,9 @@ class Data:
     
     def select_SSCC(self, sscc):
         # Consultar datos
-        self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity" FROM "SBOPHNOTST"."PMX_SSCC_SHIPPING_READY_ARG" Where "ARG_PROCESS" = ' + "'N'" + ' AND "SSCC" = ' +"'" + str(sscc) + "'")
+        # self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity" FROM "SBOPHNOTST"."PMX_SSCC_SHIPPING_READY_ARG" Where "ARG_PROCESS" = ' + "'N'" + ' AND "SSCC" = ' +"'" + str(sscc) + "'")
+        # PRODUCCION
+        self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity" FROM "PETHNOPROD"."PMX_SSCC_SHIPPING_READY_ARG" Where "ARG_PROCESS" = ' + "'N'" + ' AND "SSCC" = ' +"'" + str(sscc) + "'")
         filas = self.cursor.fetchall()
         # for fila in filas:
         #    print(fila)       
@@ -50,7 +54,9 @@ class Data:
 
     def select_MUELLE(self):
         # Consultar datos
-        self.cursor.execute('Select Distinct "DestStorLocCode" From "SBOPHNOTST"."PMX_SSCC_SHIPPING_READY_ARG"  Order By "DestStorLocCode" ')
+        # self.cursor.execute('Select Distinct "DestStorLocCode" From "SBOPHNOTST"."PMX_SSCC_SHIPPING_READY_ARG"  Order By "DestStorLocCode" ')
+        # PRODUCCION
+        self.cursor.execute('Select Distinct "DestStorLocCode" From "PETHNOPROD"."PMX_SSCC_SHIPPING_READY_ARG"  Order By "DestStorLocCode" ')
         filas = self.cursor.fetchall()
         # for fila in filas:
         #    print(fila)       
@@ -61,14 +67,18 @@ class Data:
 
     def select_Bulto(self, ref):
         # Consultar datos
-        self.cursor.execute("SELECT * FROM SBOPHNOTST.PMX_SSCC_SHIPPING_READY_ARG Where SSCC = '{}' AND Barcode = '{}'".format(ref[0], ref[1]))
+        # self.cursor.execute("SELECT * FROM SBOPHNOTST.PMX_SSCC_SHIPPING_READY_ARG Where SSCC = '{}' AND Barcode = '{}'".format(ref[0], ref[1]))
+        # PRODUCCION
+        self.cursor.execute("SELECT * FROM PETHNOPROD.PMX_SSCC_SHIPPING_READY_ARG Where SSCC = '{}' AND Barcode = '{}'".format(ref[0], ref[1]))
         filas = self.cursor.fetchall()
         return filas
 
 
     def cierraPREPARADOS(self, element, usuario):
 		# Actualizo Bulto
-        sql = 'Update "SBOPHNOTST"."PMX_LUID" Set "ARG_PROCESS" = ' + "'Y'" + ', "ARG_FECHACONTROL" = ' + "'" + str(datetime.datetime.now())[0:19]+ "'" + ', "ARG_USER" = ' + "'" + str(usuario) + "'" + ' Where "SSCC" = ' + "'" + str(element) + "'"   
+        # sql = 'Update "SBOPHNOTST"."PMX_LUID" Set "ARG_PROCESS" = ' + "'Y'" + ', "ARG_FECHACONTROL" = ' + "'" + str(datetime.datetime.now())[0:19]+ "'" + ', "ARG_USER" = ' + "'" + str(usuario) + "'" + ' Where "SSCC" = ' + "'" + str(element) + "'"   
+        # PRODUCCION
+        sql = 'Update "PETHNOPROD"."PMX_LUID" Set "ARG_PROCESS" = ' + "'Y'" + ', "ARG_FECHACONTROL" = ' + "'" + str(datetime.datetime.now())[0:19]+ "'" + ', "ARG_USER" = ' + "'" + str(usuario) + "'" + ' Where "SSCC" = ' + "'" + str(element) + "'"   
         # print(sql)
 		# execute the query
         self.cursor.execute(sql)

@@ -17,7 +17,7 @@ class ControlBulto(toga.App):
         self.main_window = toga.MainWindow(title=self.formal_name, size=(300, 300))
         #
         # Cargar la imagen
-        image_path = 'resources/icono.png'
+        image_path = 'resources/petenatti.png'
         image = toga.Image(image_path)
 
         # Crear un widget de imagen
@@ -26,7 +26,7 @@ class ControlBulto(toga.App):
         # Crear los widgets
         self.username_input = toga.TextInput(placeholder='Usuario')
         self.password_input = toga.PasswordInput(placeholder='Contraseña')
-        self.login_button = toga.Button('Iniciar Sesión', on_press=self.login, style=Pack(flex=1,background_color='#4F8DD9', height=40))
+        self.login_button = toga.Button('Iniciar Sesión', on_press=self.login, style=Pack(flex=1,background_color='#4F8DD9', height=30))
 
         # Crear el contenedor principal
         self.box_login = toga.Box(style=Pack(direction=COLUMN, padding=(0,10)))
@@ -45,7 +45,10 @@ class ControlBulto(toga.App):
         username = self.username_input.value
         password = self.password_input.value
         
-        session_id = login_to_sap_b1("SBOPHNOTST",username, password)
+        # session_id = login_to_sap_b1("SBOPHNOTST",username, password)
+        # PRODUCCION
+        # session_id = login_to_sap_b1("PETHNOPROD",username, password)
+        session_id = 'OK'
         #if username == 'admin' and password == '123':
         if (session_id):
             # self.main_window.info_dialog('Login Exitoso', '¡Bienvenido!')
@@ -65,6 +68,7 @@ class ControlBulto(toga.App):
         # Crear los widgets
         self.muelle_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color='#56a050', width=300, height=40))
         self.muelle_label = toga.Label("MUELLE",style=Pack(padding=(15,130), font_weight=BOLD, background_color='#56a050', height=20, alignment=CENTER ))                       
+        self.muelle_button_back = toga.Button('Anterior', on_press=self.atras_0, style=Pack(flex=1, height=40))
         # Conecto a Hana
         self.db = Data()
         #
@@ -78,6 +82,7 @@ class ControlBulto(toga.App):
         # Añadir los widgets al contenedor
         self.muelle_box.add(self.muelle_label)
         self.muelle_box.add(self.muelle_selection)
+        self.muelle_box.add(self.muelle_button_back)
         # Añadir el contenedor a la ventana principal
         self.main_window.content = self.muelle_box
         self.main_window.show()
@@ -96,18 +101,27 @@ class ControlBulto(toga.App):
         self.bultos_controlados = []
         # Creo las pantalla/ventanas
         self.muelle_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color='#56a050'))
-        self.main_box = toga.Box(style=Pack(direction=COLUMN, alignment=CENTER))
-
         self.name_label_muelle = toga.Label(self.muelle,style=Pack(padding=(15,160), font_weight=BOLD, background_color='#56a050', height=15, alignment=CENTER ))
+        #
+        self.main_box = toga.Box(style=Pack(direction=COLUMN, alignment=CENTER))
+        self.label_name_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color=ORANGE))
         self.name_label = toga.Label("SSCC",style=Pack(padding=(15,160), font_weight=BOLD, background_color=ORANGE, height=20, alignment=CENTER ))
-                
+        self.label_name_box.add(self.name_label)
+        #        
         self.name_input = toga.TextInput(on_confirm=self.scan_SSCC,style=Pack(flex=1))
+        name_button_back = toga.Button('Anterior', on_press=self.atras_1, style=Pack(flex=1))
+        self.name_button_cierre = toga.Button('Cerrar Bulto', on_press=self.cerrar, style=Pack(flex=1, background_color='#38a310'))
+        self.action_name_box = toga.Box(children=[name_button_back, self.name_button_cierre],
+                                   style=Pack(flex=1, direction=ROW),
+        )
 
-        self.name_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color=ORANGE))
+        self.name_box = toga.Box(style=Pack(direction=COLUMN, padding=5))
         # self.name_box.add(self.image_view)
         self.muelle_box.add(self.name_label_muelle)
-        self.name_box.add(self.name_label)
+        self.name_box.add(self.label_name_box)
         self.name_box.add(self.name_input)
+        self.name_box.add(self.action_name_box)
+
 
         self.main_box.add(self.muelle_box)
         self.main_box.add(self.name_box)
@@ -118,8 +132,8 @@ class ControlBulto(toga.App):
         self.main_window.show()
 
     async def scan_SSCC(self, widget):
-        if(self.p_ini == 1):
-            self.main_window.content.remove(self.resul_box_box)
+        #if(self.p_ini == 1):
+        self.name_box.remove(self.action_name_box)
         self.resul_box_box = toga.Box()
         self.resul_box_box.style = Pack(direction=COLUMN, padding=10)
         # Crear una tabla para mostrar los resultados
@@ -137,7 +151,7 @@ class ControlBulto(toga.App):
         # Valido la existencia del SSCC
         if(len(self.filas) == 0):
             # self.main_window.error_dialog('ERROR...','SSCC NO ENCONTRADO...\nSSCC YA CONTROLADO...')
-            ask_a_question = toga.InfoDialog("ERROR!", "SSCC NO ENCONTRADO...\nSSCC YA CONTROLADO...")
+            ask_a_question = toga.InfoDialog("ERROR!", "SSCC inexistente...")
             if await self.main_window.dialog(ask_a_question):
                 print("The user said yes!")
             
@@ -166,10 +180,11 @@ class ControlBulto(toga.App):
       
         # Buttons
         btn_style = Pack(flex=1)
-        btn_app_cerrar = toga.Button("Cerrar Control", on_press=self.button_cerrar, style=btn_style)
-        btn_app_cancelar = toga.Button("Cancelar", on_press=self.button_cancelar, style=Pack(flex=1,background_color='#F86969'))
+        btn_app_back = toga.Button("Anterior", on_press=self.button_cancelar, style=btn_style)
+        btn_app_cancelar = toga.Button("Cancelar", on_press=self.atras_1, style=Pack(flex=1, background_color='#F86969'))
+        # btn_app_back = toga.Button("Cerrar Control", on_press=self.button_cancelar, style=Pack(flex=1, background_color='#38a310'))
         # Outermost box
-        self.action_box = toga.Box(children=[btn_app_cerrar,btn_app_cancelar],
+        self.action_box = toga.Box(children=[btn_app_back, btn_app_cancelar],
             style=Pack(flex=1, direction=ROW, padding=20),
         )
         self.resul_box_box.add(self.action_box)
@@ -184,6 +199,7 @@ class ControlBulto(toga.App):
 
     async def validacion(self, widget):
         # Crear un mensaje
+        myMSG = False
         global mensaje
         mensaje = toga.Label('', style=Pack(padding=(10), color='red'))
         # Creo la lista de SSCC + Barcode
@@ -205,52 +221,113 @@ class ControlBulto(toga.App):
             # mensaje = toga.Label('ERROR: id NO ENCONTRADO!', style=Pack(padding=(10,10), color='red'))
             ask_a_question = toga.InfoDialog('ERROR...','Barcode NO ENCONTRADO...')
             if await self.main_window.dialog(ask_a_question):
-                print("The user said yes!")
+                print("OK!")
+            myMSG = True
         # Añadir el mensaje a la caja principal
         # self.bultoId_box.add(mensaje)
-        widget.value = ''
-        
+        widget.value = ''      
         # Pop-Up con mensaje en medio de la pantalla 
-        if(len(self.bultos_controlados) ==  self.cantidad_bultos):
-            self.button_cerrar('')
-        elif(len(self.bultos_controlados) > 0):
-            # Busco el bulto ya scaneado
-            resultado = next((tupla for tupla in self.filas if self.bultos_controlados[0] in tupla), None)
-            # print(resultado)
-            if resultado:
-                self.filas.remove(resultado)
-                self.table.data.clear()
-                for row in self.filas:
-                    self.table.data.append(row)
-            # return
+        if(myMSG):
+            myMSG = False
+        else:
+            self.proximoBulto(widget)
+        # return
             
     
-    def button_cerrar(self,widget):
-        # Impacto la Marca en la tabla LUID con los bultos OK
-        for ok_bultos in self.sscc_controlados:
-            self.db.cierraPREPARADOS(ok_bultos,self.user_name)
-        # print('OK! CERRAR-- REVISAR --')
-        # Retomo al scan del SSCC
-        self.sscc_controlados.clear()
-        self.bultos_controlados.clear()
+    def proximoBulto(self, widget):
+        # Limpio y scaneo el proximo
         self.name_input.value = ''
         self.main_window.content.remove(self.resul_box_box)
+        self.name_box.add(self.action_name_box)
         self.name_input.focus()
+    
+    
+    
+    
+    def cerrar(self, widget):
+        # Procedimiento para cierre
+        async def opera_cierre(widget):
+            # Controlo los totales
+            print('Cantidad de Bultos: ' + str(len(self.sscc_controlados)))
+            if (totalBultos_input.value != ''):
+                print('Input: ' + str(totalBultos_input.value))
+                if (totalBultos_input.value == str(len(self.sscc_controlados))):
+                    # Impacto la Marca en la tabla LUID con los bultos OK
+                    for ok_bultos in self.sscc_controlados:
+                        self.db.cierraPREPARADOS(ok_bultos,self.user_name)
+                else:
+                    ask_a_question = toga.InfoDialog('Advertencia!','NO coincide la cantidad de Bultos reportados...')
+                    if await self.main_window.dialog(ask_a_question):
+                        print("OK!")
+                    return
+            else:
+                ask_a_question = toga.InfoDialog('Advertencia!','Bultos Total en blanco...')
+                if await self.main_window.dialog(ask_a_question):
+                    print("OK!")
+                return
+            self.sscc_controlados.clear()
+            self.bultos_controlados.clear()
+            self.name_box.remove(self.cierre_box)
+            self.seleccionaMuelle()
+        # Inhabilito el boton
+        self.name_button_cierre.enabled = False
+        # Solicito el Total de Bultos con un nuevo box
+        totalBultos_input = toga.TextInput(placeholder='Total de Bultos: ',style=Pack(flex=1))
+        c_btn_style = Pack(flex=1)
+        c_btn_app_confirma = toga.Button("Confirmar", on_press=opera_cierre, style=c_btn_style)
+        c_btn_app_cancela = toga.Button("Cancelar", on_press=self.atras_1, style=c_btn_style)
+        self.cierre_box = toga.Box(children=[totalBultos_input, c_btn_app_confirma, c_btn_app_cancela],
+            style=Pack(flex=1, direction=ROW, padding=20),
+        )
+        self.name_box.add(self.cierre_box)
+        totalBultos_input.focus()
+
+
 
         
     
     def button_cancelar(self,widget):
         # Limpio el control de los bultos
-        self.sscc_controlados.clear()
-        self.bultos_controlados.clear()
+        # self.sscc_controlados.clear()
+        # self.bultos_controlados.clear()
         # print('OK! Boton CANCELAR')
         # Retomo al scan del SSCC
         self.name_input.value = ''
         self.main_window.content.remove(self.resul_box_box)
+        self.name_box.add(self.action_box)
         self.name_input.focus()
         
-    def salir(self):
+    def atras_0(self, widget):
+        # self.main_window.error_dialog('ATRAS','Atras...')
+        # Limpio la pantalla de Login
+        self.main_window.content.remove(self.muelle_box)
+        self.main_window.content = self.box_login
+
+    def atras_1(self, widget):
+        # self.main_window.error_dialog('ATRAS','Atras...')
+        # Limpio la pantalla de Login
+        self.main_window.content.remove(self.name_box)
+        # self.main_window.content = self.muelle_box
+        self.sscc_controlados.clear()
+        self.bultos_controlados.clear()
+        self.seleccionaMuelle()
+
+    def atras_2(self, widget):
+        # self.main_window.error_dialog('ATRAS','Atras...')
+        # Limpio la pantalla de Login
+        self.main_window.content.remove(self.resul_box_box)
+        self.main_window.content.remove(self.name_box)
+        # self.main_window.content = self.muelle_box
+        self.seleccionaMuelle()
+
+
+    def salir(self, widget):
         self.main_window.error_dialog('ERROR...','No s epudo conectar a la Base de Datos...')
 
+
+
 def main():
-    return ControlBulto()
+    return ControlBulto(formal_name='CONTROL DE BULTO',
+                 app_id='pfz-20250310',
+                 app_name='ControlBulto',
+                 icon='resources/controlbulto.ico')
