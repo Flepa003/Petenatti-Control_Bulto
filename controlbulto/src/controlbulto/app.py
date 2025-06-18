@@ -67,12 +67,13 @@ class ControlBulto(toga.App):
         self.main_window.content.remove(self.box_login)
         # Crear los widgets
         self.muelle_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color='#56a050', width=300, height=40))
-        self.muelle_label = toga.Label("MUELLE",style=Pack(padding=(15,130), font_weight=BOLD, background_color='#56a050', height=20, alignment=CENTER ))                       
+        self.muelle_label = toga.Label("MUELLE - OLA",style=Pack(padding=(15,125), font_weight=BOLD, background_color='#56a050', height=20, alignment=CENTER ))                       
         self.muelle_button_back = toga.Button('Anterior', on_press=self.atras_0, style=Pack(flex=1, height=40))
         # Conecto a Hana
         self.db = Data()
         #
-        self.muelle_filas = self.db.select_MUELLE()
+        # self.muelle_filas = self.db.select_MUELLE()
+        self.muelle_filas = self.db.select_OLA()
         #
         self.muelle_selection = toga.Selection(
             items=self.muelle_filas, on_change=self.proceso,
@@ -89,8 +90,13 @@ class ControlBulto(toga.App):
 
             
     def proceso(self, widget):
+        # Tomo Muelle y Ola
+        indice = str(widget.value).find("-")
         # Guardo el muelle
-        self.muelle = widget.value
+        self.muelle = str(widget.value)[:indice]
+        # Guardo el Ola
+        self.ola = str(widget.value)[indice+1:]
+
         # Limpio la pantalla de Login
         self.main_window.content.remove(self.muelle_box)
         # Creo seleccion de MUELLE
@@ -147,7 +153,7 @@ class ControlBulto(toga.App):
         if (len(self.mySSCC) > 18):
             self.mySSCC = self.mySSCC[-18:]
         # Busco los datos en la DB
-        self.filas = self.db.select_SSCC(self.mySSCC)
+        self.filas = self.db.select_SSCC(self.mySSCC, self.muelle, self.ola)
         # Valido la existencia del SSCC
         if(len(self.filas) == 0):
             # self.main_window.error_dialog('ERROR...','SSCC NO ENCONTRADO...\nSSCC YA CONTROLADO...')
