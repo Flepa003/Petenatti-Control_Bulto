@@ -53,6 +53,19 @@ class Data:
         self.conexion.close()
         return filas
     
+    def select_SSCC_OLA(self, muelle, ola):
+        # Consultar datos
+        # self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity" FROM "SBOPHNOTST"."PMX_SSCC_SHIPPING_READY_ARG" Where "ARG_PROCESS" = ' + "'N'" + ' AND "SSCC" = ' +"'" + str(sscc) + "'")
+        # PRODUCCION
+        # self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity" FROM ' + str(self.database) + '."PMX_SSCC_SHIPPING_READY_ARG" Where "ARG_PROCESS" = ' + "'N'" + ' AND "SSCC" = ' +"'" + str(sscc) + "'")
+        self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity", "SSCC" FROM ' + str(self.database) + '."PMX_SSCC_SHIPPING_READY_ARG" Where "ARG_PROCESS" = ' + "'N'" + ' AND  "DestStorLocCode" = ' + "'" + str(muelle) + "'" + '	AND "Ola" = ' + "'" + str(ola) + "'")
+        filas = self.cursor.fetchall()
+        # for fila in filas:
+        #    print(fila)       
+        # Cerrar la conexión
+        # self.conn.close()
+        return filas    
+    
     def select_SSCC(self, sscc, muelle, ola):
         # Consultar datos
         # self.cursor.execute('SELECT "ItemCode", "PRODUCTDESCRIPTION", "Quantity" FROM "SBOPHNOTST"."PMX_SSCC_SHIPPING_READY_ARG" Where "ARG_PROCESS" = ' + "'N'" + ' AND "SSCC" = ' +"'" + str(sscc) + "'")
@@ -98,7 +111,9 @@ class Data:
         # Consultar datos
         # self.cursor.execute("SELECT * FROM SBOPHNOTST.PMX_SSCC_SHIPPING_READY_ARG Where SSCC = '{}' AND Barcode = '{}'".format(ref[0], ref[1]))
         # PRODUCCION
-        self.cursor.execute("SELECT * FROM " + str(self.database) + ".PMX_SSCC_SHIPPING_READY_ARG Where SSCC = '{}' AND Barcode = '{}'".format(ref[0], ref[1]))
+        # PFZ - 20-06-2025: se modifica pues puede existir distintos BarCode para una mismo ItemCode
+        # self.cursor.execute("SELECT * FROM " + str(self.database) + ".PMX_SSCC_SHIPPING_READY_ARG Where SSCC = '{}' AND Barcode = '{}'".format(ref[0], ref[1]))
+        self.cursor.execute(('Select * From '  + str(self.database) + '.OBCD Where "ItemCode" = ' + "'" + '{}' + "'").format(ref[0][0]))
         filas = self.cursor.fetchall()
         return filas
 

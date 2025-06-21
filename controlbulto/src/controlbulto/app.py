@@ -112,18 +112,21 @@ class ControlBulto(toga.App):
         self.main_box = toga.Box(style=Pack(direction=COLUMN, alignment=CENTER))
         self.label_name_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color=ORANGE))
         self.name_label = toga.Label("SSCC",style=Pack(padding=(15,160), font_weight=BOLD, background_color=ORANGE, height=20, alignment=CENTER ))
+        #
         self.label_name_box.add(self.name_label)
         #        
         self.name_input = toga.TextInput(on_confirm=self.scan_SSCC,style=Pack(flex=1))
         name_button_back = toga.Button('Anterior', on_press=self.atras_1, style=Pack(flex=1))
-        self.name_button_cierre = toga.Button('Cerrar Bulto', on_press=self.cerrar, style=Pack(flex=1, background_color='#38a310'))
+        self.name_button_cierre = toga.Button('Cerrar SSCC', on_press=self.cerrar, style=Pack(flex=1, background_color='#38a310'))
         self.action_name_box = toga.Box(children=[name_button_back, self.name_button_cierre],
                                    style=Pack(flex=1, direction=ROW),
         )
 
         self.name_box = toga.Box(style=Pack(direction=COLUMN, padding=5))
         # self.name_box.add(self.image_view)
+        #
         self.muelle_box.add(self.name_label_muelle)
+        #
         self.name_box.add(self.label_name_box)
         self.name_box.add(self.name_input)
         self.name_box.add(self.action_name_box)
@@ -140,6 +143,7 @@ class ControlBulto(toga.App):
     async def scan_SSCC(self, widget):
         #if(self.p_ini == 1):
         self.name_box.remove(self.action_name_box)
+        #
         self.resul_box_box = toga.Box()
         self.resul_box_box.style = Pack(direction=COLUMN, padding=10)
         # Crear una tabla para mostrar los resultados
@@ -147,8 +151,21 @@ class ControlBulto(toga.App):
             headings=['Item','Description','Qty'],
                 style=Pack(flex=1)
         )
-        # Guardo el SSCC para uso posterior
-        self.mySSCC = widget.value
+        # Valido si este SSCC ya fue scaneado
+        if(len(self.sscc_controlados) > 0):
+            if(widget.value in self.sscc_controlados):
+                # Ya fue scaneado el SSCC
+                ask_a_question = toga.InfoDialog("ADVERTENCIA!", "SSCC ya scaneado...")
+                if await self.main_window.dialog(ask_a_question):
+                    print("The user said yes!")
+                self.name_input.value = ''
+                return
+            else:
+                # Guardo el SSCC para uso posterior
+                self.mySSCC = widget.value
+        else:
+            # Guardo el SSCC para uso posterior
+            self.mySSCC = widget.value
         # Controlo el largo del SSCC a 18
         if (len(self.mySSCC) > 18):
             self.mySSCC = self.mySSCC[-18:]
@@ -179,8 +196,11 @@ class ControlBulto(toga.App):
         #
         self.bultoId_box.add(self.bultoId_label)
         self.bultoId_box.add(self.bultoId_input)
-        #
-        # self.resul_box_box.add(self.resul_label)
+        # Busco la Cantidad de SSCC por OLA
+        self.cantidad_sscc_ola = self.db.select_SSCC_OLA(self.muelle,self.ola)
+        self.label_qty_sscc = toga.Label('SSCC restantes: ' + str(len(self.cantidad_sscc_ola) - len(self.sscc_controlados)) + ' de ' + str(len(self.cantidad_sscc_ola)) + ', para Ola: ' + str(self.ola) )
+        # Agrego los items para mostrar al box
+        self.resul_box_box.add(self.label_qty_sscc)
         self.resul_box_box.add(self.table)
         self.resul_box_box.add(self.bultoId_box)
       
@@ -207,10 +227,10 @@ class ControlBulto(toga.App):
         # Crear un mensaje
         myMSG = False
         global mensaje
-        mensaje = toga.Label('', style=Pack(padding=(10), color='red'))
+        mensaje = toga.Label('', style=Pack(padding=(10), color='red'))           
         # Creo la lista de SSCC + Barcode
         myElement = [self.mySSCC, widget.value]
-        bulto = self.db.select_Bulto(myElement)
+        bulto = self.db.select_Bulto(self.filas)
         if (len(bulto) > 0):
             # mensaje
             #self.main_window.info_dialog('Bulto','Id scan Ok!')
@@ -219,6 +239,7 @@ class ControlBulto(toga.App):
                 self.sscc_controlados=[self.mySSCC]
                 self.bultos_controlados= [widget.value]
             else:
+                # Debo verificar si el Bulto ya fue scaneado
                 self.sscc_controlados.append(self.mySSCC)
                 self.bultos_controlados.append(widget.value)
             
@@ -230,12 +251,20 @@ class ControlBulto(toga.App):
                 print("OK!")
             myMSG = True
         # Añadir el mensaje a la caja principal
-        # self.bultoId_box.add(mensaje)
+        print(f"SSCC scaneados: {self.sscc_controlados}")
+        print(f"Bultos scaneados: {self.bultos_controlados}")
         widget.value = ''      
         # Pop-Up con mensaje en medio de la pantalla 
         if(myMSG):
+            # Me quedo en el mismo bultos a la espera de un proximo scan valido
             myMSG = False
+        elif((len(self.cantidad_sscc_ola) - len(self.sscc_controlados)) == 0):
+            # Cierror el SSCC
+            self.name_input.value = ''
+            self.main_window.content.remove(self.resul_box_box)
+            self.cerrar(widget)
         else:
+            # Continuo controlando los butlos 
             self.proximoBulto(widget)
         # return
             
@@ -251,12 +280,12 @@ class ControlBulto(toga.App):
     
     
     def cerrar(self, widget):
-        # Procedimiento para cierre
+        # Procedimiento para cierre del SSCC
         async def opera_cierre(widget):
             # Controlo los totales
-            print('Cantidad de Bultos: ' + str(len(self.sscc_controlados)))
+            print(f"Cantidad de SSCC: {len(self.sscc_controlados)}" )
             if (totalBultos_input.value != ''):
-                print('Input: ' + str(totalBultos_input.value))
+                print(f"Total de Bultos ingresado por pantalla: {totalBultos_input.value}" )
                 if (totalBultos_input.value == str(len(self.sscc_controlados))):
                     # Impacto la Marca en la tabla LUID con los bultos OK
                     for ok_bultos in self.sscc_controlados:
