@@ -107,7 +107,7 @@ class ControlBulto(toga.App):
         self.bultos_controlados = []
         # Creo las pantalla/ventanas
         self.muelle_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color='#56a050'))
-        self.name_label_muelle = toga.Label(self.muelle,style=Pack(padding=(15,160), font_weight=BOLD, background_color='#56a050', height=15, alignment=CENTER ))
+        self.name_label_muelle = toga.Label(self.muelle + ' - ' + self.ola,style=Pack(padding=(15,160), font_weight=BOLD, background_color='#56a050', height=15, alignment=CENTER ))
         #
         self.main_box = toga.Box(style=Pack(direction=COLUMN, alignment=CENTER))
         self.label_name_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color=ORANGE))
@@ -234,25 +234,35 @@ class ControlBulto(toga.App):
         if (len(bulto) > 0):
             # mensaje
             #self.main_window.info_dialog('Bulto','Id scan Ok!')
-            # Agrego los butos para su impacto/cancelacion
-            if len(self.bultos_controlados) == 0:
-                self.sscc_controlados=[self.mySSCC]
-                self.bultos_controlados= [widget.value]
-            else:
-                # Debo verificar si el Bulto ya fue scaneado
-                self.sscc_controlados.append(self.mySSCC)
-                self.bultos_controlados.append(widget.value)
-            
+            # Verifico que los Items coincidan
+            for barcodes in bulto:
+                if(widget.value == barcodes[1]):
+                    # Agrego los butos para su impacto/cancelacion
+                    if len(self.bultos_controlados) == 0:
+                        self.sscc_controlados=[self.mySSCC]
+                        self.bultos_controlados= [widget.value]
+                    else:
+                        # Debo verificar si el Bulto ya fue scaneado
+                        self.sscc_controlados.append(self.mySSCC)
+                        self.bultos_controlados.append(widget.value)
+                    myMSG = False
+                    break
+                else:
+                    myMSG = True
+            #        
+            if(myMSG):
+                ask_a_question = toga.InfoDialog('ERROR...','El Barcode NO corresponde con el Item del SSCC...')
+                if await self.main_window.dialog(ask_a_question):
+                    print("No ENCONTRADO!")            
         else:
-            # mensaje
             # mensaje = toga.Label('ERROR: id NO ENCONTRADO!', style=Pack(padding=(10,10), color='red'))
             ask_a_question = toga.InfoDialog('ERROR...','Barcode NO ENCONTRADO...')
             if await self.main_window.dialog(ask_a_question):
-                print("OK!")
+                print("No ENCONTRADO!")
             myMSG = True
         # Añadir el mensaje a la caja principal
-        print(f"SSCC scaneados: {self.sscc_controlados}")
-        print(f"Bultos scaneados: {self.bultos_controlados}")
+        # print(f"SSCC scaneados: {self.sscc_controlados}")
+        # print(f"Bultos scaneados: {self.bultos_controlados}")
         widget.value = ''      
         # Pop-Up con mensaje en medio de la pantalla 
         if(myMSG):
