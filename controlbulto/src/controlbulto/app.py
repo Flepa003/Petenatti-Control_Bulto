@@ -3,6 +3,8 @@ Realiza el control del bulto - PMX
 """
 import asyncio
 import toga
+import configparser
+import os
 from toga.style import Pack
 from toga.style.pack import BOLD, COLUMN, CENTER, CENTER
 from toga.constants import *
@@ -44,11 +46,28 @@ class ControlBulto(toga.App):
     def login(self, widget):
         username = self.username_input.value
         password = self.password_input.value
-        
+        # Leer configuraciones
+        config = configparser.ConfigParser()
+        # Obtener la ruta del archivo en la carpeta actual
+        current_directory = os.getcwd()
+        # current_directory = "D:\Desarrollos Python\Petinatti-Control-Bulto\controlbulto"
+        config_file_path = os.path.join(current_directory, 'settings.ini')
+        # print(config_file_path)
+
+        # Leer el archivo de configuración
+        config.read(config_file_path)
+
+        # Acceder a configuraciones
+        my_entorno = config.get("general", "entorno")
+        my_database = config.get("general", "database")
+        # PARA PRUEBAS        
+        # my_database = "SBOPHNOTST"        
+        # TEST
         # session_id = login_to_sap_b1("SBOPHNOTST",username, password)
         # PRODUCCION
         # session_id = login_to_sap_b1("PETHNOPROD",username, password)
-        session_id = 'OK'
+        session_id = login_to_sap_b1(my_database,username, password)
+        # session_id = 'OK'
         #if username == 'admin' and password == '123':
         if (session_id):
             # self.main_window.info_dialog('Login Exitoso', '¡Bienvenido!')
@@ -109,6 +128,16 @@ class ControlBulto(toga.App):
         self.muelle_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color='#56a050'))
         self.name_label_muelle = toga.Label(self.muelle + ' - ' + self.ola,style=Pack(padding=(15,160), font_weight=BOLD, background_color='#56a050', height=15, alignment=CENTER ))
         #
+        # Busco la Cantidad de SSCC por OLA
+        self.cantidad_sscc_ola = self.db.select_SSCC_OLA(self.muelle,self.ola)
+        text_sscc_restante = 'SSCC restantes: ' + str(len(self.cantidad_sscc_ola) - len(self.sscc_controlados)) + ' de ' + str(len(self.cantidad_sscc_ola)) + ', para Ola: ' + str(self.ola)
+        self.label_qty_sscc = toga.Label(text=text_sscc_restante,  style=Pack(
+            font_size=10,
+            color='blue',
+            text_align='center',
+            padding=5
+        ))
+        #
         self.main_box = toga.Box(style=Pack(direction=COLUMN, alignment=CENTER))
         self.label_name_box = toga.Box(style=Pack(direction=COLUMN, padding=5, background_color=ORANGE))
         self.name_label = toga.Label("SSCC",style=Pack(padding=(15,160), font_weight=BOLD, background_color=ORANGE, height=20, alignment=CENTER ))
@@ -117,7 +146,7 @@ class ControlBulto(toga.App):
         #        
         self.name_input = toga.TextInput(on_confirm=self.scan_SSCC,style=Pack(flex=1))
         name_button_back = toga.Button('Anterior', on_press=self.atras_1, style=Pack(flex=1))
-        self.name_button_cierre = toga.Button('Cerrar SSCC', on_press=self.cerrar, style=Pack(flex=1, background_color='#38a310'))
+        self.name_button_cierre = toga.Button('Cerrar CONTROL', on_press=self.cerrar, style=Pack(flex=1, background_color='#38a310'))
         self.action_name_box = toga.Box(children=[name_button_back, self.name_button_cierre],
                                    style=Pack(flex=1, direction=ROW),
         )
@@ -128,10 +157,10 @@ class ControlBulto(toga.App):
         self.muelle_box.add(self.name_label_muelle)
         #
         self.name_box.add(self.label_name_box)
+        self.name_box.add(self.label_qty_sscc)
         self.name_box.add(self.name_input)
         self.name_box.add(self.action_name_box)
-
-
+        #
         self.main_box.add(self.muelle_box)
         self.main_box.add(self.name_box)
 
@@ -196,11 +225,7 @@ class ControlBulto(toga.App):
         #
         self.bultoId_box.add(self.bultoId_label)
         self.bultoId_box.add(self.bultoId_input)
-        # Busco la Cantidad de SSCC por OLA
-        self.cantidad_sscc_ola = self.db.select_SSCC_OLA(self.muelle,self.ola)
-        self.label_qty_sscc = toga.Label('SSCC restantes: ' + str(len(self.cantidad_sscc_ola) - len(self.sscc_controlados)) + ' de ' + str(len(self.cantidad_sscc_ola)) + ', para Ola: ' + str(self.ola) )
         # Agrego los items para mostrar al box
-        self.resul_box_box.add(self.label_qty_sscc)
         self.resul_box_box.add(self.table)
         self.resul_box_box.add(self.bultoId_box)
       
@@ -281,6 +306,7 @@ class ControlBulto(toga.App):
     
     def proximoBulto(self, widget):
         # Limpio y scaneo el proximo
+        self.label_qty_sscc.text= 'SSCC restantes: ' + str(len(self.cantidad_sscc_ola) - len(self.sscc_controlados)) + ' de ' + str(len(self.cantidad_sscc_ola)) + ', para Ola: ' + str(self.ola)
         self.name_input.value = ''
         self.main_window.content.remove(self.resul_box_box)
         self.name_box.add(self.action_name_box)
@@ -300,6 +326,10 @@ class ControlBulto(toga.App):
                     # Impacto la Marca en la tabla LUID con los bultos OK
                     for ok_bultos in self.sscc_controlados:
                         self.db.cierraPREPARADOS(ok_bultos,self.user_name)
+                    # Mensje Procesado OK    
+                    ask_a_question = toga.InfoDialog('Control SSCC','SSCC controlados OK...')
+                    if await self.main_window.dialog(ask_a_question):
+                        print("OK!")
                 else:
                     ask_a_question = toga.InfoDialog('Advertencia!','NO coincide la cantidad de Bultos reportados...')
                     if await self.main_window.dialog(ask_a_question):
@@ -314,6 +344,18 @@ class ControlBulto(toga.App):
             self.bultos_controlados.clear()
             self.name_box.remove(self.cierre_box)
             self.seleccionaMuelle()
+        # -----------------------
+        # Muestra SSCC pendientes, si los hay
+        mySSCC_restantes = ['SSCC Pendientes']
+        if (len(self.cantidad_sscc_ola) > len(self.sscc_controlados)):
+            for xx_sscc in self.cantidad_sscc_ola:
+                if (xx_sscc[3] not in self.sscc_controlados):
+                    mySSCC_restantes.append(xx_sscc[3][-15:])
+        #
+        ssscc_pendientes = toga.Selection(
+            items=mySSCC_restantes, on_change=self.proceso,
+            style=Pack(flex=1)
+        )
         # Inhabilito el boton
         self.name_button_cierre.enabled = False
         # Solicito el Total de Bultos con un nuevo box
@@ -321,15 +363,15 @@ class ControlBulto(toga.App):
         c_btn_style = Pack(flex=1)
         c_btn_app_confirma = toga.Button("Confirmar", on_press=opera_cierre, style=c_btn_style)
         c_btn_app_cancela = toga.Button("Cancelar", on_press=self.atras_1, style=c_btn_style)
-        self.cierre_box = toga.Box(children=[totalBultos_input, c_btn_app_confirma, c_btn_app_cancela],
+        # self.cierre_box = toga.Box(children=[totalBultos_input,c_btn_app_confirma, c_btn_app_cancela],
+        self.cierre_box = toga.Box(children=[ssscc_pendientes,c_btn_app_confirma, c_btn_app_cancela],
             style=Pack(flex=1, direction=ROW, padding=20),
         )
         self.name_box.add(self.cierre_box)
-        totalBultos_input.focus()
+        # PFZ - 20-06-2025: al agregar OLA, yo deterimino la cantidad de SSCC
+        # totalBultos_input.focus()
+        totalBultos_input.value =  len(self.sscc_controlados)
 
-
-
-        
     
     def button_cancelar(self,widget):
         # Limpio el control de los bultos
@@ -350,7 +392,7 @@ class ControlBulto(toga.App):
 
     def atras_1(self, widget):
         # self.main_window.error_dialog('ATRAS','Atras...')
-        # Limpio la pantalla de Login
+        # Limpio la pantalla de SSCC
         self.main_window.content.remove(self.name_box)
         # self.main_window.content = self.muelle_box
         self.sscc_controlados.clear()
@@ -359,7 +401,7 @@ class ControlBulto(toga.App):
 
     def atras_2(self, widget):
         # self.main_window.error_dialog('ATRAS','Atras...')
-        # Limpio la pantalla de Login
+        # Limpio la pantalla de Barcode
         self.main_window.content.remove(self.resul_box_box)
         self.main_window.content.remove(self.name_box)
         # self.main_window.content = self.muelle_box

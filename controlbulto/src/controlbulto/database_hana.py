@@ -1,4 +1,5 @@
 # import sqlite3
+import os
 import configparser
 import datetime
 from hdbcli import dbapi
@@ -21,18 +22,25 @@ class Data:
         # except Exception as e:
             # Captura cualquier excepción y la imprime
             # print(f"Ha ocurrido un error: {e}")
-        #
-        # Tomo los valores de la DB con la cual trabajar
-        # Crear un objeto ConfigParser
+        # Leer configuraciones
         config = configparser.ConfigParser()
+        # Obtener la ruta del archivo en la carpeta actual
+        current_directory = os.getcwd()
+        # current_directory = "D:\Desarrollos Python\Petinatti-Control-Bulto\controlbulto"
+        config_file_path = os.path.join(current_directory, 'settings.ini')
+        # print(config_file_path)
 
-        # Leer el archivo .ini
-        config.read('setings.ini')
-        
-        # Obtener un valor específico
-        # self.entorno = config.get("SETTINGS","entorno")
-        # self.database = config.get("SETTINGS","database")
-        self.database = "SBOPHNOTST"
+        # Leer el archivo de configuración
+        config.read(config_file_path)
+
+        # Acceder a configuraciones
+        self.entorno = config.get("general", "entorno")
+        self.database = config.get("general", "database")
+        # PARA PRUEBAS
+        # self.database = "SBOPHNOTST"
+        # print(f"ENTORNO: {self.entorno}")
+        # Tomo los valores de la DB con la cual trabajar
+
 
 	
     def insert(self):
@@ -95,7 +103,7 @@ class Data:
         # Consultar datos
         # self.cursor.execute('Select Distinct "DestStorLocCode" From "SBOPHNOTST"."PMX_SSCC_SHIPPING_READY_ARG"  Order By "DestStorLocCode" ')
         # PRODUCCION
-        self.cursor.execute('Select Distinct "DestStorLocCode" , "Ola" From ' + str(self.database) + '."PMX_SSCC_SHIPPING_READY_ARG" Order By "DestStorLocCode" , "Ola" ')
+        self.cursor.execute('Select Distinct "DestStorLocCode" , "Ola" From ' + str(self.database) + '."PMX_SSCC_SHIPPING_READY_ARG" Where "ARG_PROCESS" = ' + "'N'" + ' Order By "DestStorLocCode" , "Ola" ')
         filas = self.cursor.fetchall()
         muelle_ola = []
         for fila in filas:
