@@ -50,6 +50,7 @@ class ControlBulto(toga.App):
         config = configparser.ConfigParser()
         # Obtener la ruta del archivo en la carpeta actual
         current_directory = os.getcwd()
+        # print(current_directory)
         # current_directory = "D:\Desarrollos Python\Petinatti-Control-Bulto\controlbulto"
         config_file_path = os.path.join(current_directory, 'settings.ini')
         # print(config_file_path)
@@ -295,6 +296,7 @@ class ControlBulto(toga.App):
             myMSG = False
         elif((len(self.cantidad_sscc_ola) - len(self.sscc_controlados)) == 0):
             # Cierror el SSCC
+            self.label_qty_sscc.text= 'FIN SSCC para Ola: ' + str(self.ola)
             self.name_input.value = ''
             self.main_window.content.remove(self.resul_box_box)
             self.cerrar(widget)
@@ -353,7 +355,7 @@ class ControlBulto(toga.App):
                     mySSCC_restantes.append(xx_sscc[3][-15:])
         #
         ssscc_pendientes = toga.Selection(
-            items=mySSCC_restantes, on_change=self.proceso,
+            items=mySSCC_restantes, on_change='',
             style=Pack(flex=1)
         )
         # Inhabilito el boton
